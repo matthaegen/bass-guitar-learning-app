@@ -58,7 +58,28 @@ function loadYouTubeApi() {
   return apiPromise
 }
 
-const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5]
+const MIN_RATE = 0.25
+const MAX_RATE = 2
+const RATE_STEP = 0.05
+const RATE_STORAGE_KEY = 'lowend.playbackRate.v1'
+
+function loadStoredRate(): number {
+  try {
+    const raw = window.localStorage.getItem(RATE_STORAGE_KEY)
+    const parsed = raw === null ? NaN : Number(raw)
+    return Number.isFinite(parsed) ? Math.min(MAX_RATE, Math.max(MIN_RATE, parsed)) : 1
+  } catch {
+    return 1
+  }
+}
+
+function storeRate(rate: number) {
+  try {
+    window.localStorage.setItem(RATE_STORAGE_KEY, String(rate))
+  } catch {
+    // storage unavailable (e.g. private browsing) — just skip persisting
+  }
+}
 
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60)
@@ -72,14 +93,14 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const loopRef = useRef<{ a: number | null; b: number | null }>({ a: null, b: null })
   const [ready, setReady] = useState(false)
   const [playing, setPlaying] = useState(false)
-  const [rate, setRate] = useState(1)
+  const [rate, setRate] = useState(loadStoredRate)
   const [loop, setLoop] = useState<{ a: number | null; b: number | null }>({ a: null, b: null })
 
   useEffect(() => {
     let cancelled = false
     setReady(false)
     setPlaying(false)
-    setRate(1)
+    setRate(loadStoredRate())
     setLoop({ a: null, b: null })
     loopRef.current = { a: null, b: null }
 
@@ -92,7 +113,11 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         videoId,
         playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
         events: {
-          onReady: () => !cancelled && setReady(true),
+          onReady: () => {
+            if (cancelled) return
+            playerRef.current?.setPlaybackRate(loadStoredRate())
+            setReady(true)
+          },
           onStateChange: (e) => !cancelled && setPlaying(e.data === 1),
           onPlaybackRateChange: (e) => !cancelled && setRate(e.data),
         },
@@ -120,9 +145,12 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const player = () => playerRef.current
 
   function changeRate(next: number) {
-    const clamped = Math.min(2, Math.max(0.25, Math.round(next * 100) / 100))
+    const steps = Math.round((next - MIN_RATE) / RATE_STEP)
+    const snapped = MIN_RATE + steps * RATE_STEP
+    const clamped = Math.min(MAX_RATE, Math.max(MIN_RATE, Math.round(snapped * 100) / 100))
     player()?.setPlaybackRate(clamped)
     setRate(clamped)
+    storeRate(clamped)
   }
 
   function nudge(seconds: number) {
@@ -233,32 +261,31 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              className="h-12 w-14 font-mono"
-              disabled={!ready || rate <= 0.25}
-              onClick={() => changeRate(rate - 0.05)}
+              className="h-12 w-14 shrink-0 font-mono"
+              disabled={!ready || rate <= MIN_RATE}
+              onClick={() => changeRate(rate - RATE_STEP)}
               aria-label="Slower by 5 percent"
             >
               −5
             </Button>
-            <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-6">
-              {SPEEDS.map((s) => (
-                <Button
-                  key={s}
-                  variant={rate === s ? 'default' : 'secondary'}
-                  className="h-12 font-mono text-base"
-                  disabled={!ready}
-                  aria-pressed={rate === s}
-                  onClick={() => changeRate(s)}
-                >
-                  {s}×
-                </Button>
-              ))}
-            </div>
+
+            <input
+              type="range"
+              min={MIN_RATE}
+              max={MAX_RATE}
+              step={RATE_STEP}
+              value={rate}
+              disabled={!ready}
+              onChange={(e) => changeRate(Number(e.target.value))}
+              aria-label="Playback speed"
+              className="h-10 flex-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            />
+
             <Button
               variant="outline"
-              className="h-12 w-14 font-mono"
-              disabled={!ready || rate >= 2}
-              onClick={() => changeRate(rate + 0.05)}
+              className="h-12 w-14 shrink-0 font-mono"
+              disabled={!ready || rate >= MAX_RATE}
+              onClick={() => changeRate(rate + RATE_STEP)}
               aria-label="Faster by 5 percent"
             >
               +5

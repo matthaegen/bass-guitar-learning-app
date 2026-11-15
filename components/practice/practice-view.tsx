@@ -97,91 +97,93 @@ export function PracticeView() {
       {assignments.length === 0 ? (
         !adding && <EmptyState onAdd={() => setAdding(true)} />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          {selected && (
-            <section aria-labelledby="now-playing" className="flex min-w-0 flex-col gap-4">
-              <YouTubePlayer videoId={selected.videoId} title={selected.title} />
-              {editingId === selected.id ? (
-                <AssignmentForm
-                  key={selected.id}
-                  initial={selected}
-                  submitLabel="Save changes"
-                  autoFocus
-                  onCancel={() => setEditingId(null)}
-                  onSubmit={(values) => {
-                    updateAssignment(selected.id, values)
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="assignment-list" className="text-lg font-semibold">
+              Assignments
+            </h2>
+            <div role="group" aria-label="Filter" className="flex rounded-lg bg-secondary p-1">
+              {(['current', 'archive'] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  aria-pressed={filter === f}
+                  onClick={() => {
+                    setFilter(f)
+                    setSelectedId(null)
                     setEditingId(null)
                   }}
-                />
-              ) : (
-                <AssignmentDetails
-                  assignment={selected}
-                  practiced={selected.practiceLog.includes(today)}
-                  onTogglePracticed={() => togglePracticedToday(selected.id)}
-                  onEdit={() => setEditingId(selected.id)}
-                  onToggleArchive={() => {
-                    updateAssignment(selected.id, { archived: !selected.archived })
-                    setSelectedId(null)
-                  }}
-                  onDelete={() => {
-                    if (window.confirm(`Delete “${selected.title}”? This can’t be undone.`)) {
-                      deleteAssignment(selected.id)
-                      setSelectedId(null)
-                    }
-                  }}
-                />
-              )}
-            </section>
-          )}
+                  className={cn(
+                    'h-9 rounded-md px-3 text-sm font-medium',
+                    filter === f ? 'bg-card shadow-sm' : 'text-muted-foreground',
+                  )}
+                >
+                  {f === 'current' ? 'Current' : 'Archive'}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <section aria-labelledby="assignment-list" className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h2 id="assignment-list" className="text-lg font-semibold">
-                Assignments
-              </h2>
-              <div role="group" aria-label="Filter" className="flex rounded-lg bg-secondary p-1">
-                {(['current', 'archive'] as const).map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    aria-pressed={filter === f}
-                    onClick={() => {
-                      setFilter(f)
-                      setSelectedId(null)
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            {selected && (
+              <section aria-labelledby="now-playing" className="flex min-w-0 flex-col gap-4">
+                <YouTubePlayer videoId={selected.videoId} title={selected.title} />
+                {editingId === selected.id ? (
+                  <AssignmentForm
+                    key={selected.id}
+                    initial={selected}
+                    submitLabel="Save changes"
+                    autoFocus
+                    onCancel={() => setEditingId(null)}
+                    onSubmit={(values) => {
+                      updateAssignment(selected.id, values)
                       setEditingId(null)
                     }}
-                    className={cn(
-                      'h-9 rounded-md px-3 text-sm font-medium',
-                      filter === f ? 'bg-card shadow-sm' : 'text-muted-foreground',
-                    )}
-                  >
-                    {f === 'current' ? 'Current' : 'Archive'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {visible.length === 0 ? (
-              <p className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                {filter === 'current'
-                  ? 'No current assignments. Add one to get going.'
-                  : 'Songs you archive will be kept here as a record.'}
-              </p>
-            ) : (
-              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                {visible.map((a) => (
-                  <li key={a.id}>
-                    <AssignmentListItem
-                      assignment={a}
-                      active={selected?.id === a.id}
-                      practiced={a.practiceLog.includes(today)}
-                      onSelect={() => selectAssignment(a.id)}
-                    />
-                  </li>
-                ))}
-              </ul>
+                  />
+                ) : (
+                  <AssignmentDetails
+                    assignment={selected}
+                    practiced={selected.practiceLog.includes(today)}
+                    onTogglePracticed={() => togglePracticedToday(selected.id)}
+                    onEdit={() => setEditingId(selected.id)}
+                    onToggleArchive={() => {
+                      updateAssignment(selected.id, { archived: !selected.archived })
+                      setSelectedId(null)
+                    }}
+                    onDelete={() => {
+                      if (window.confirm(`Delete “${selected.title}”? This can’t be undone.`)) {
+                        deleteAssignment(selected.id)
+                        setSelectedId(null)
+                      }
+                    }}
+                  />
+                )}
+              </section>
             )}
-          </section>
+
+            <section aria-labelledby="assignment-list" className="flex flex-col gap-3">
+              {visible.length === 0 ? (
+                <p className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  {filter === 'current'
+                    ? 'No current assignments. Add one to get going.'
+                    : 'Songs you archive will be kept here as a record.'}
+                </p>
+              ) : (
+                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  {visible.map((a) => (
+                    <li key={a.id}>
+                      <AssignmentListItem
+                        assignment={a}
+                        active={selected?.id === a.id}
+                        practiced={a.practiceLog.includes(today)}
+                        onSelect={() => selectAssignment(a.id)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
         </div>
       )}
     </>
