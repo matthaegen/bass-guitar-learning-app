@@ -3,6 +3,10 @@
 # dependencies
 /node_modules
 
+# this project uses pnpm; ignore lockfiles from other package managers
+package-lock.json
+yarn.lock
+
 # next.js
 /.next/
 /out/
