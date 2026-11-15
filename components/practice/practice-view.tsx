@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import {
   Archive,
   ArchiveRestore,
   Check,
   CircleCheck,
   Ellipsis,
+  Flame,
   MonitorPlay,
   Pencil,
   Plus,
@@ -26,6 +28,7 @@ import { PageHeader } from '@/components/page-header'
 import { AssignmentForm } from '@/components/practice/assignment-form'
 import { YouTubePlayer } from '@/components/practice/youtube-player'
 import { type Assignment, todayKey } from '@/lib/local-store'
+import { computePracticeStats } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 
 type Filter = 'current' | 'archive'
@@ -50,6 +53,7 @@ export function PracticeView() {
   const selected = visible.find((a) => a.id === selectedId) ?? visible[0] ?? null
   const practicedToday = current.filter((a) => a.practiceLog.includes(today)).length
   const firstName = user?.name.split(' ')[0]
+  const stats = computePracticeStats(assignments)
 
   function selectAssignment(id: string) {
     setSelectedId(id)
@@ -77,6 +81,17 @@ export function PracticeView() {
           )
         }
       />
+
+      <Link
+        href="/progress"
+        className="mb-6 inline-flex items-center gap-2 self-start rounded-full bg-secondary px-4 py-2 text-sm font-medium hover:bg-secondary/80"
+      >
+        <Flame
+          className={cn('size-4', stats.currentStreak > 0 ? 'text-chart-1' : 'text-muted-foreground')}
+          aria-hidden="true"
+        />
+        {stats.currentStreak > 0 ? `${stats.currentStreak}-day streak` : 'Start your streak'}
+      </Link>
 
       {adding && (
         <div className="mb-6">

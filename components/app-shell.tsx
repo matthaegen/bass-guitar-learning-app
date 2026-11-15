@@ -3,13 +3,14 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { AudioLines, ListMusic, Loader2, Timer, UserRound } from 'lucide-react'
+import { AudioLines, Flame, ListMusic, Loader2, Timer, UserRound } from 'lucide-react'
 import { useApp } from '@/components/app-provider'
 import { BrandMark } from '@/components/brand-mark'
 import { cn } from '@/lib/utils'
 
 const NAV = [
   { href: '/practice', label: 'Practice', icon: ListMusic },
+  { href: '/progress', label: 'Progress', icon: Flame },
   { href: '/metronome', label: 'Metronome', icon: Timer },
   { href: '/tuner', label: 'Tuner', icon: AudioLines },
   { href: '/account', label: 'Account', icon: UserRound },
@@ -82,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href)
@@ -92,7 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               href={href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex flex-col items-center gap-1 py-3 text-xs font-medium',
+                'flex flex-col items-center gap-1 whitespace-nowrap py-3 text-xs font-medium',
                 active ? 'text-primary' : 'text-muted-foreground',
               )}
             >
